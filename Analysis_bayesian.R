@@ -1,5 +1,4 @@
 
-### Bayesian analysis of beach cohort survey data 
 
 pacman::p_load(
   Matrix,
@@ -33,8 +32,6 @@ m_resp <- brm(respiratory3 ~ 0 + Intercept + water_contact +
 summary(m_resp, robust = TRUE)
 get_variables(m_resp)
 plot(m_resp)
-pp_check(m_resp, ndraws=100)
-pp_check(m_resp, type = "stat", stat = "mean")
 
 conditional_effects(m_resp, effects = "water_contact") 
 
@@ -48,7 +45,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 # Model has poor predictive accuracy/fit
 # Add full model-covariates and FIB interaction
 
-m_resp2 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 + cond_resp + 
+m_resp2 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
                cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + 
                (1 | beach/recruit_date/house_id),
              family = bernoulli, data = data_follow, prior = priors,
@@ -58,8 +55,6 @@ m_resp2 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + a
 summary(m_resp2, robust = TRUE)
 get_variables(m_resp2)
 plot(m_resp2)
-pp_check(m_resp2, ndraws=100)
-pp_check(m_resp2, type = "stat", stat = "mean")
 
 conditional_effects(m_resp2, effects = "log_e_coli_max_s:water_contact")
 conditional_effects(m_resp2, effects = "water_contact") -> fit
@@ -68,7 +63,7 @@ fit$water_contact
 # Examine PAV-adjusted calibration plot diagnostic
 
 y <- data_follow |> mutate(respiratory4 = if_else(respiratory3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$respiratory4
 yrep <- posterior_predict(m_resp2, draws = 500)
@@ -76,7 +71,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Model has poor predictive accuracy - drop random effect for house and add house group variable instead
 
-m_resp3 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 + cond_resp + 
+m_resp3 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
                  cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
                  (1 | site/beach/recruit_date),
                family = bernoulli, data = data_follow, prior = priors,
@@ -86,8 +81,6 @@ m_resp3 <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + a
 summary(m_resp3, robust = TRUE)
 get_variables(m_resp3)
 plot(m_resp3)
-pp_check(m_resp3, ndraws=100)
-pp_check(m_resp3, type = "stat", stat = "mean")
 
 conditional_effects(m_resp3, effects = "log_e_coli_max_s:water_contact")
 conditional_effects(m_resp3, effects = "water_contact") -> fit
@@ -99,7 +92,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Body immersion exposure
 
-m_resp3.1 <- brm(respiratory3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 + cond_resp + 
+m_resp3.1 <- brm(respiratory3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
                 cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
                 (1 | site/beach/recruit_date),
               family = bernoulli, data = data_follow, prior = priors,
@@ -108,8 +101,6 @@ m_resp3.1 <- brm(respiratory3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s 
 
 summary(m_resp3.1, robust = TRUE)
 plot(m_resp3.1)
-pp_check(m_resp3.1, ndraws=100)
-pp_check(m_resp3.1, type = "stat", stat = "mean")
 
 conditional_effects(m_resp3.1, effects = "log_e_coli_max_s:water_exp_body")
 conditional_effects(m_resp3.1, effects = "water_exp_body") -> fit
@@ -120,7 +111,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Head immersion exposure
 
-m_resp3.2 <- brm(respiratory3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 + cond_resp + 
+m_resp3.2 <- brm(respiratory3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
                    cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
                    (1 | site/beach/recruit_date),
                  family = bernoulli, data = data_follow, prior = priors,
@@ -130,8 +121,6 @@ m_resp3.2 <- brm(respiratory3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s 
 summary(m_resp3.2, robust = TRUE)
 get_variables(m_resp3.2)
 plot(m_resp3.2)
-pp_check(m_resp3.2, ndraws=100)
-pp_check(m_resp3.2, type = "stat", stat = "mean")
 
 conditional_effects(m_resp3.2, effects = "log_e_coli_max_s:water_exp_head")
 conditional_effects(m_resp3.2, effects = "water_exp_head")
@@ -144,18 +133,16 @@ loo(m_resp3.1, m_resp3.2)
 
 # Examine time in water as predictor
 
-m_resp3.3 <- brm(respiratory3 ~ 0 + Intercept + water_time_s*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 + cond_resp + 
+m_resp3.3 <- brm(respiratory3 ~ 0 + Intercept + water_time_s*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
                    cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
                    (1 | site/beach/recruit_date),
                  family = bernoulli, data = data_follow, prior = priors,
-                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 3804, control = list(adapt_delta = 0.95),
+                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 3804, control = list(adapt_delta = 0.99),
                  backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
 summary(m_resp3.3, robust = TRUE)
 get_variables(m_resp3.3)
 plot(m_resp3.3)
-pp_check(m_resp3.3, ndraws=100)
-pp_check(m_resp3.3, type = "stat", stat = "mean")
 
 conditional_effects(m_resp3.3, effects = "log_e_coli_max_s:water_time_s")
 conditional_effects(m_resp3.3, effects = "water_time_s")
@@ -170,26 +157,24 @@ loo(m_resp3.1, m_resp3.2, m_resp3.3)
 ### Skin illness outcome ###
 # Any water contact
 
-m_skin <- brm(skin_infection3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin <- brm(skin_infection3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +   
                 cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                 sand_contact + household_group +
                 (1 | site/beach/recruit_date),
               family = bernoulli, data = data_follow, prior = priors,
-              iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 1014, control = list(adapt_delta = 0.95),
+              iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 1014, control = list(adapt_delta = 0.99),
               backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
 summary(m_skin, robust = TRUE)
 get_variables(m_skin)
 plot(m_skin)
-pp_check(m_skin, ndraws=100)
-pp_check(m_skin, type = "stat", stat = "mean")
 
 conditional_effects(m_skin, effects = "log_e_coli_max_s:water_contact")
 conditional_effects(m_skin, effects = "water_contact") -> fit
 fit$water_contact
 
 y <- data_follow |> mutate(skin_infection4 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "ethnicity2", "cond_skin", 
+  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "cond_skin", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection4
 yrep <- posterior_predict(m_skin, draws = 500)
@@ -197,18 +182,16 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Body immersion exposure
 
-m_skin1 <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin1 <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 +  
                 cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                 sand_contact + household_group +
                 (1 | site/beach/recruit_date),
               family = bernoulli, data = data_follow, prior = priors,
-              iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 9180, control = list(adapt_delta = 0.95),
+              iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 9180, control = list(adapt_delta = 0.99),
               backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
 summary(m_skin1, robust = TRUE)
 plot(m_skin1)
-pp_check(m_skin1, ndraws=100)
-pp_check(m_skin1, type = "stat", stat = "mean")
 
 conditional_effects(m_skin1, effects = "log_e_coli_max_s:water_exp_body")
 conditional_effects(m_skin1, effects = "water_exp_body") -> fit
@@ -218,7 +201,7 @@ yrep <- posterior_predict(m_skin1, draws = 500)
 ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
-m_skin1.2 <- brm(skin_infection3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin1.2 <- brm(skin_infection3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -228,8 +211,6 @@ m_skin1.2 <- brm(skin_infection3 ~ 0 + Intercept + water_exp_head*log_e_coli_max
 
 summary(m_skin1.2, robust = TRUE)
 plot(m_skin1.2)
-pp_check(m_skin1.2, ndraws=100)
-pp_check(m_skin1.2, type = "stat", stat = "mean")
 
 conditional_effects(m_skin1.2, effects = "log_e_coli_max_s:water_exp_head")
 conditional_effects(m_skin1.2, effects = "water_exp_head") -> fit
@@ -240,19 +221,17 @@ loo(m_skin1, m_skin1.2)
 
 # Examine time in water as predictor
 
-m_skin2 <- brm(skin_infection3 ~ 0 + Intercept + water_time_s*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin2 <- brm(skin_infection3 ~ 0 + Intercept + water_time_s*log_e_coli_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
                  family = bernoulli, data = data_follow, prior = priors,
-                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 5173, control = list(adapt_delta = 0.95),
+                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 5173, control = list(adapt_delta = 0.99),
                  backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
 summary(m_skin2, robust = TRUE)
 get_variables(m_skin2)
 plot(m_skin2)
-pp_check(m_skin2, ndraws=100)
-pp_check(m_skin2, type = "stat", stat = "mean")
 
 conditional_effects(m_skin2, effects = "log_e_coli_max_s:water_time_s")
 conditional_effects(m_skin2, effects = "water_time_s")
@@ -264,7 +243,7 @@ loo(m_skin1, m_skin2)
 
 # Re-run body immersion model with other FIB
 
-m_skin_entero <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_entero_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_entero <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_entero_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -272,17 +251,15 @@ m_skin_entero <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_entero
                  iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 6782, control = list(adapt_delta = 0.99),
                  backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
-summary(m_skin_entero , robust = TRUE)
+summary(m_skin_entero, robust = TRUE)
 get_variables(m_skin_entero)
 plot(m_skin_entero)
-pp_check(m_skin_entero, ndraws=100)
-pp_check(m_skin_entero, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_entero, effects = "log_entero_max_s:water_exp_body")
 conditional_effects(m_skin_entero, effects = "water_exp_body")
 
 y <- data_follow |> mutate(skin_infection3 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_entero_max_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_entero_max_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection3
 yrep <- posterior_predict(m_skin_entero, draws = 500)
@@ -290,7 +267,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Examine with turbidity as water quality indicator
 
-m_skin_turb <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_turbidity_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_turb <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_turbidity_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -301,14 +278,12 @@ m_skin_turb <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_turbidit
 summary(m_skin_turb, robust = TRUE)
 get_variables(m_skin_turb)
 plot(m_skin_turb)
-pp_check(m_skin_turb, ndraws=100)
-pp_check(m_skin_turb, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_turb, effects = "log_turbidity_s:water_exp_body")
 conditional_effects(m_skin_turb, effects = "water_exp_body")
 
 y <- data_follow |> mutate(skin_infection3 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_turbidity_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_turbidity_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection3
 yrep <- posterior_predict(m_skin_turb, draws = 500)
@@ -316,7 +291,7 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 # Examine MST markers
 
-m_skin_human <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_human_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_human <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_human_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -327,21 +302,19 @@ m_skin_human <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_hum
 summary(m_skin_human, robust = TRUE)
 get_variables(m_skin_human)
 plot(m_skin_human)
-pp_check(m_skin_human, ndraws=100)
-pp_check(m_skin_human, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_human, effects = "log_mst_human_max_s:water_exp_body")
 conditional_effects(m_skin_human, effects = "water_exp_body")
 
 y <- data_follow |> mutate(skin_infection3 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_mst_human_max_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_mst_human_max_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection3
 yrep <- posterior_predict(m_skin_human, draws = 500)
 ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
-m_skin_human_mt <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_human_mt_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_human_mt <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_human_mt_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -352,21 +325,19 @@ m_skin_human_mt <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_
 summary(m_skin_human_mt, robust = TRUE)
 get_variables(m_skin_human_mt)
 plot(m_skin_human_mt)
-pp_check(m_skin_human_mt, ndraws=100)
-pp_check(m_skin_human_mt, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_human_mt, effects = "log_mst_human_mt_max_s:water_exp_body")
 conditional_effects(m_skin_human_mt, effects = "water_exp_body")
 
 y <- data_follow |> mutate(skin_infection3 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_mst_human_mt_max_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_mst_human_mt_max_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection3
 yrep <- posterior_predict(m_skin_human_mt, draws = 500)
 ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
-m_skin_gull <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_gull_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_gull <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_gull_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
@@ -377,14 +348,12 @@ m_skin_gull <- brm(skin_infection3 ~ 0 + Intercept + water_exp_body*log_mst_gull
 summary(m_skin_gull, robust = TRUE)
 get_variables(m_skin_gull)
 plot(m_skin_gull)
-pp_check(m_skin_gull, ndraws=100)
-pp_check(m_skin_gull, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_gull, effects = "log_mst_gull_max_s:water_exp_body")
 conditional_effects(m_skin_gull, effects = "water_exp_body")
 
 y <- data_follow |> mutate(skin_infection3 = if_else(skin_infection3=="No", 0, 1)) |> 
-  drop_na(any_of(c("log_mst_gull_max_s", "age5", "gender", "education2", "ethnicity2", "cond_resp", 
+  drop_na(any_of(c("log_mst_gull_max_s", "age5", "gender", "education2", "cond_resp", 
                    "other_rec_act", "beach_exp_food", "sand_contact")))
 y <- y$skin_infection3
 yrep <- posterior_predict(m_skin_gull, draws = 500)
@@ -392,49 +361,181 @@ ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
 
-# Sensitivity analysis
+### Sensitivity analysis - skin infections
 
-m_skin_3day <- brm(skin_infection_3day ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
+m_skin_3day_any <- brm(skin_infection_3day ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +   
                  cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
                  sand_contact + household_group +
                  (1 | site/beach/recruit_date),
                family = bernoulli, data = data_follow, prior = priors,
-               iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 7749, control = list(adapt_delta = 0.95),
+               iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 4076, control = list(adapt_delta = 0.95),
                backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_skin_3day_any, robust = TRUE)
+plot(m_skin_3day_any)
+
+conditional_effects(m_skin_3day_any, effects = "log_e_coli_max_s:water_contact")
+conditional_effects(m_skin_3day_any, effects = "water_contact") 
+
+y <- data_follow |> mutate(skin_infection_3day = if_else(skin_infection_3day=="No", 0, 1)) |> 
+  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "cond_skin", 
+                   "other_rec_act", "beach_exp_food", "sand_contact")))
+y <- y$skin_infection_3day
+yrep <- posterior_predict(m_skin_3day_any, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+m_skin_3day <- brm(skin_infection_3day ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 +   
+                     cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
+                     sand_contact + household_group +
+                     (1 | site/beach/recruit_date),
+                   family = bernoulli, data = data_follow, prior = priors,
+                   iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 7749, control = list(adapt_delta = 0.99),
+                   backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
 summary(m_skin_3day, robust = TRUE)
 plot(m_skin_3day)
-pp_check(m_skin_3day, ndraws=100)
-pp_check(m_skin_3day, type = "stat", stat = "mean")
 
 conditional_effects(m_skin_3day, effects = "log_e_coli_max_s:water_exp_body")
-conditional_effects(m_skin_3day, effects = "water_exp_body") -> fit
-fit$water_exp_body
+conditional_effects(m_skin_3day, effects = "water_exp_body") 
 
 yrep <- posterior_predict(m_skin_3day, draws = 500)
 ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
-### Negative control - skin infection
+m_skin_3day_head <- brm(skin_infection_3day ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 +   
+                     cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
+                     sand_contact + household_group +
+                     (1 | site/beach/recruit_date),
+                   family = bernoulli, data = data_follow, prior = priors,
+                   iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 0584, control = list(adapt_delta = 0.95),
+                   backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
 
-data_neg_control <- data_follow |> filter(water_contact3 == "No contact")
+summary(m_skin_3day_head, robust = TRUE)
+plot(m_skin_3day_head)
 
-m.nc <- brm(skin_infection3 ~ 0 + Intercept + log_e_coli_max_s + age5 + gender + education2 + ethnicity2 +  
-              cond_skin + cond_immune + cond_allergy + other_rec_act + beach_exp_sunscreen + beach_exp_repellent +
-              sand_contact + household_group +
-              (1 | site/beach/recruit_date),
-              family = bernoulli, data = data_neg_control, prior = priors,
-              iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 1868, control = list(adapt_delta = 0.99),
-              backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+conditional_effects(m_skin_3day_head, effects = "log_e_coli_max_s:water_exp_head")
+conditional_effects(m_skin_3day_head, effects = "water_exp_head") 
 
-summary(m.nc, robust = TRUE)
-plot(m.nc)
-plot(m.nc, variable = "b_log_e_coli_s")
-plot(m.nc, variable = "b_log_e_coli_s", combo = c("dens", "rank_overlay"))
-pp_check(m.nc, ndraws=100)
-pp_check(m.nc, type = "stat", stat = "mean")
-
-conditional_effects(m.nc, effects = "log_e_coli_max_s")
+yrep <- posterior_predict(m_skin_3day_head, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
 
 
+### Sensitivity analysis - respiratory infections
+
+m_resp_3day_any <- brm(respiratory_3day ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                 cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                   (1 | site/beach/recruit_date),
+               family = bernoulli, data = data_follow, prior = priors,
+               iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 6954, control = list(adapt_delta = 0.95),
+               backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_resp_3day_any, robust = TRUE)
+plot(m_resp_3day_any)
+
+conditional_effects(m_resp_3day_any, effects = "log_e_coli_max_s:water_contact")
+conditional_effects(m_resp_3day_any, effects = "water_contact")
+
+
+y <- data_follow |> mutate(respiratory_3day = if_else(respiratory_3day=="No", 0, 1)) |> 
+  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "cond_resp", 
+                   "other_rec_act", "beach_exp_food", "sand_contact")))
+y <- y$respiratory_3day
+yrep <- posterior_predict(m_resp_3day_any, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+m_resp_3day_head <- brm(respiratory_3day ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                         cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                          (1 | site/beach/recruit_date),
+                       family = bernoulli, data = data_follow, prior = priors,
+                       iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 9200, control = list(adapt_delta = 0.95),
+                       backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_resp_3day_head, robust = TRUE)
+plot(m_resp_3day_head)
+
+conditional_effects(m_resp_3day_head, effects = "log_e_coli_max_s:water_exp_head")
+conditional_effects(m_resp_3day_head, effects = "water_exp_head")
+
+yrep <- posterior_predict(m_resp_3day_head, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+m_resp_3day_body <- brm(respiratory_3day ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                          cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                          (1 | site/beach/recruit_date),
+                        family = bernoulli, data = data_follow, prior = priors,
+                        iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 1148, control = list(adapt_delta = 0.95),
+                        backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_resp_3day_body, robust = TRUE)
+plot(m_resp_3day_body)
+
+conditional_effects(m_resp_3day_body, effects = "log_e_coli_max_s:water_exp_body")
+conditional_effects(m_resp_3day_body, effects = "water_exp_body")
+
+yrep <- posterior_predict(m_resp_3day_body, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+
+## Check model with one random participant per household for respiratory illness
+## To examine impact of household clustering
+
+data_house <- data_follow |> group_by(house_id, respiratory3) |> 
+  slice_sample(n=1)
+
+data_house |> tabyl(respiratory3)
+
+m_resp3.house <- brm(respiratory3 ~ 0 + Intercept + water_contact*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                 cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                 (1 | site/beach/recruit_date),
+               family = bernoulli, data = data_house, prior = priors,
+               iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 2636, control = list(adapt_delta = 0.95),
+               backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+conditional_effects(m_resp3.house, effects = "log_e_coli_max_s:water_contact")
+conditional_effects(m_resp3.house, effects = "water_contact") -> fit
+fit$water_contact
+
+y <- data_house |> mutate(respiratory4 = if_else(respiratory3=="No", 0, 1)) |> 
+  drop_na(any_of(c("log_e_coli_max_s", "age5", "gender", "education2", "cond_resp", 
+                   "other_rec_act", "beach_exp_food", "sand_contact")))
+y <- y$respiratory4
+yrep <- posterior_predict(m_resp3.house, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+m_resp3.1.house <- brm(respiratory3 ~ 0 + Intercept + water_exp_body*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                   cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                   (1 | site/beach/recruit_date),
+                 family = bernoulli, data = data_house, prior = priors,
+                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 1935, control = list(adapt_delta = 0.99),
+                 backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_resp3.1.house, robust = TRUE)
+
+conditional_effects(m_resp3.1.house, effects = "log_e_coli_max_s:water_exp_body")
+conditional_effects(m_resp3.1.house, effects = "water_exp_body") -> fit
+fit$water_exp_body
+
+yrep <- posterior_predict(m_resp3.1.house, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
+
+
+m_resp3.2.house <- brm(respiratory3 ~ 0 + Intercept + water_exp_head*log_e_coli_max_s + age5 + gender + education2 +  cond_resp + 
+                   cond_immune + cond_allergy + other_rec_act + beach_exp_food + sand_contact + household_group +
+                   (1 | site/beach/recruit_date),
+                 family = bernoulli, data = data_house, prior = priors,
+                 iter = 2000, chains = 4, cores = 4, warmup = 1000, seed = 7213, control = list(adapt_delta = 0.99),
+                 backend = "cmdstanr", stan_model_args = list(stanc_options = list("O1")))
+
+summary(m_resp3.2.house, robust = TRUE)
+
+conditional_effects(m_resp3.2.house, effects = "log_e_coli_max_s:water_exp_head")
+conditional_effects(m_resp3.2.house, effects = "water_exp_head")
+
+yrep <- posterior_predict(m_resp3.2.house, draws = 500)
+ppc_calibration_pava(y, 0.95, yrep[1:100,])
 

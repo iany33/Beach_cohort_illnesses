@@ -7,7 +7,9 @@
 .RDataTmp
 
 # Other files
-.tiff
+/.Rproj/
+.Rproj.user/
+/.tiff/
 Analysis_ear_eye.R
 data.xlsx
 

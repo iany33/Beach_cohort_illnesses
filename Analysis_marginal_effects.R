@@ -34,7 +34,7 @@ nd <- data_follow |>
             water_exp_body = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_skin = "No", cond_immune = "No",
+            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
             sand_contact = "No", household_group = "Yes") 
@@ -82,8 +82,7 @@ mfx |> group_by(contrast) |>
   summarize(proportion_0 = mean(draw > 0),
             proportion_1 = mean(draw > 1),
             proportion_5 = mean(draw > 5),
-            proportion_10 = mean(draw > 10),
-            proportion_20 = mean(draw > 20))
+            proportion_10 = mean(draw > 10))
 
 # Population-averaged (marginal) adjusted risk ratios
 
@@ -105,7 +104,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Skin_body
+  xlim(0,3) -> Skin_body
 
 
 # Gender specific estimates 
@@ -124,10 +123,10 @@ mfx <- mfx |>
 ggplot(mfx, aes(x = draw, y = gender, fill = gender)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Effect of Water Contact on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
+  labs(x = "Effect of Body Immersion on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
-  xlim(-5, 50) +
+  xlim(-15, 50) +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
   facet_wrap(~ contrast)
 
@@ -146,12 +145,12 @@ mfx <- mfx |>
 ggplot(mfx, aes(x = draw, y = age5, fill = age5)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Effect of Water Contact on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
+  labs(x = "Effect of Body Immersion on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
   facet_wrap(~ contrast) +
-  xlim(-5, 50) 
+  xlim(-15, 50) 
 
 # Compare to other exposure measures
 
@@ -160,7 +159,7 @@ nd <- data_follow |>
             water_contact = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_skin = "No", cond_immune = "No",
+            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
             sand_contact = "No", household_group = "Yes") 
@@ -183,6 +182,12 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
   xlim(-25, 40) -> Skin_any_RD
 
+mfx |> group_by(contrast) |> 
+  summarize(proportion_0 = mean(draw > 0),
+            proportion_1 = mean(draw > 1),
+            proportion_5 = mean(draw > 5),
+            proportion_10 = mean(draw > 10))
+
 mfx <- comparisons(m_skin, re_formula = NA, comparison = "lnratio", transform = "exp", 
                    variables = "water_contact",   
                    by = "water_contact", newdata = nd) |> posterior_draws()
@@ -198,7 +203,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Skin_any
+  xlim(0,3) -> Skin_any
 
 
 nd <- data_follow |> 
@@ -206,7 +211,7 @@ nd <- data_follow |>
             water_exp_head = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_skin = "No", cond_immune = "No",
+            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
             sand_contact = "No", household_group = "Yes") 
@@ -229,6 +234,11 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
   xlim(-25, 40) -> Skin_head_RD
 
+mfx |> group_by(contrast) |> 
+  summarize(proportion_0 = mean(draw > 0),
+            proportion_1 = mean(draw > 1),
+            proportion_5 = mean(draw > 5),
+            proportion_10 = mean(draw > 10))
 
 mfx <- comparisons(m_skin1.2, re_formula = NA, comparison = "lnratio", transform = "exp", 
                    variables = "water_exp_head",   
@@ -245,14 +255,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Skin_head
-
-
-Fig_skin_RR <- Skin_any  + Skin_body + Skin_head
-Fig_skin_RR + plot_layout(ncol = 1, axes = 'collect')
-
-remove(Skin_any, Skin_body, Skin_head)
-
+  xlim(0,3) -> Skin_head
 
 
 ### Respiratory illness outcomes ###
@@ -272,7 +275,7 @@ nd <- data_follow |>
             water_exp_body = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_resp = "No", cond_immune = "No",
+            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             sand_contact = "No", household_group = "Yes") 
 
@@ -319,8 +322,7 @@ mfx |> group_by(contrast) |>
   summarize(proportion_0 = mean(draw > 0),
             proportion_1 = mean(draw > 1),
             proportion_5 = mean(draw > 5),
-            proportion_10 = mean(draw > 10),
-            proportion_20 = mean(draw > 20))
+            proportion_10 = mean(draw > 10))
 
 # Population-averaged (marginal) adjusted risk ratios
 
@@ -342,7 +344,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Resp_body
+  xlim(0,3) -> Resp_body
 
 # Compare to other exposure measures
 
@@ -351,7 +353,7 @@ nd <- data_follow |>
             water_contact = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_resp = "No", cond_immune = "No",
+            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             sand_contact = "No", household_group = "Yes") 
 
@@ -373,6 +375,11 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
   xlim(-25, 40) -> Resp_any_RD
 
+mfx |> group_by(contrast) |> 
+  summarize(proportion_0 = mean(draw > 0),
+            proportion_1 = mean(draw > 1),
+            proportion_5 = mean(draw > 5),
+            proportion_10 = mean(draw > 10))
 
 mfx <- comparisons(m_resp3, re_formula = NA, comparison = "lnratio", transform = "exp", 
                    variables = "water_contact",   
@@ -389,7 +396,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Resp_any
+  xlim(0,3) -> Resp_any
 
 
 nd <- data_follow |> 
@@ -397,10 +404,9 @@ nd <- data_follow |>
             water_exp_head = c("No", "Yes"),
             age5 = c("0-9", "10-19", "20+"),
             gender = c("woman/girl", "man/boy", "fluid/trans"),
-            ethnicity2 = "White", education2 = "bachelors", cond_resp = "No", cond_immune = "No",
+            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
             cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
             sand_contact = "No", household_group = "Yes") 
-
 
 mfx <- comparisons(m_resp3.2, re_formula = NA, variables = "water_exp_head", by = "water_exp_head", 
                    newdata = nd) |> posterior_draws()
@@ -420,6 +426,11 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
   xlim(-25, 40) -> Resp_head_RD
 
+mfx |> group_by(contrast) |> 
+  summarize(proportion_0 = mean(draw > 0),
+            proportion_1 = mean(draw > 1),
+            proportion_5 = mean(draw > 5),
+            proportion_10 = mean(draw > 10))
 
 mfx <- comparisons(m_resp3.2, re_formula = NA, comparison = "lnratio", transform = "exp", 
                    variables = "water_exp_head",   
@@ -436,23 +447,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,4) -> Resp_head
-
-Fig_resp_RR <- Resp_any  + Resp_body + Resp_head
-Fig_resp_RR + plot_layout(ncol = 1, axes = 'collect')
-
-
-### Combine RR plots ###
-
-Skin_any <- Skin_any + ggtitle("Skin Infection")
-Resp_any <- Resp_any + ggtitle("Respiratory Illness")
-
-Fig_RR <- Skin_any + Skin_body + Skin_head + Resp_any + Resp_body + Resp_head
-Fig_RR + plot_layout(ncol = 1, axes = 'collect')
-
-remove(Resp_any, Resp_body, Resp_head)
-remove(Skin_any, Skin_body, Skin_head)
-remove(Fig_resp_RR, Fig_skin_RR)
+  xlim(0,3) -> Resp_head
 
 
 ### Combine RD plots ###
@@ -465,9 +460,17 @@ Fig_RD + plot_layout(ncol = 1, axes = 'collect')
 
 remove(Resp_any_RD, Resp_body_RD, Resp_head_RD)
 remove(Skin_any_RD, Skin_body_RD, Skin_head_RD)
-remove(Fig_resp_RD, Fig_skin_RD)
 
 
+### Combine RR plots ###
 
+Skin_any <- Skin_any + ggtitle("Skin Infection")
+Resp_any <- Resp_any + ggtitle("Respiratory Illness")
+
+Fig_RR <- Skin_any + Skin_body + Skin_head + Resp_any + Resp_body + Resp_head
+Fig_RR + plot_layout(ncol = 1, axes = 'collect')
+
+remove(Resp_any, Resp_body, Resp_head)
+remove(Skin_any, Skin_body, Skin_head)
 
 
