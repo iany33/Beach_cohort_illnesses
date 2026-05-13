@@ -45,7 +45,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_e_coli, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log E. coli Highest Single Sample",
+  labs(x = "Log E. coli",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
@@ -83,7 +83,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_entero_max, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log Enterococci Highest Single Sample",
+  labs(x = "Log Enterococci",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
@@ -121,7 +121,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_mst_human_mt, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log Human Mitochondrial DNA Highest Single Sample",
+  labs(x = "Log Human Mitochondrial Marker",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
@@ -156,7 +156,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_mst_human, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log Human Sewage Biomarker Highest Single Sample",
+  labs(x = "Log Human Sewage Marker",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
@@ -191,7 +191,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_mst_gull_max, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log MST Seagull Biomarker Highest Single Sample",
+  labs(x = "Log Seagull Marker",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
