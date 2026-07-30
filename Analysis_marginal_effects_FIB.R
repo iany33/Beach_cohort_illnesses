@@ -254,12 +254,12 @@ remove(Skin_ecoli, Skin_human, Skin_human_mt, Skin_gull, Skin_entero, Skin_turbi
 # Cut-points of 25th, 50th, 75th & 95th percentiles
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(quantile = scales::percent(c(0.25, 0.5, 0.75, 0.95)),
+  reframe(quantile = scales::percent(c(0.25, 0.5, 0.75, 0.95)),
             e_coli_max = quantile(e_coli_max, na.rm=TRUE, c(0.25, 0.5, 0.75, 0.95)),
             log_e_coli_max_s = quantile(log_e_coli_max_s, na.rm=TRUE, c(0.25, 0.5, 0.75, 0.95)))
 
 list <- data |> distinct(recruit_date, .keep_all = TRUE) |>
-  summarize(log_e_coli_max_s = quantile(log_e_coli_max_s, na.rm=TRUE, c(0.25, 0.5, 0.75, 0.95)))
+  reframe(log_e_coli_max_s = quantile(log_e_coli_max_s, na.rm=TRUE, c(0.25, 0.5, 0.75, 0.95)))
 list <- as.list(list)
 
 nd <- data_follow |> 
@@ -290,10 +290,12 @@ ggplot(mfx, aes(x = draw, y = factor(e_coli), fill = factor(log_e_coli_max_s))) 
   xlim(-20, 60)
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s")
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s", conf_level = 0.8)
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "log_e_coli_max_s",
                 newdata = nd, comparison = "lnratioavg", transform = "exp")
-
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "log_e_coli_max_s",
+                newdata = nd, comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
 
 # Check proportion of posterior that is greater than 0 and other values
 

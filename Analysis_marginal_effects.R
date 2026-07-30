@@ -57,6 +57,7 @@ ggplot(pred, aes(x = draw, y = water_exp_body, fill = water_exp_body)) +
 # Examine marginal effects/contrast of water contact exposure effect - probability scale
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd)
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, conf_level = 0.8)
 
 mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "water_exp_body", 
                    newdata = nd) |> posterior_draws()
@@ -88,6 +89,8 @@ mfx |> group_by(contrast) |>
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd,
                 comparison = "lnratioavg", transform = "exp")
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd,
+                comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
 
 mfx <- comparisons(m_skin1, re_formula = NA, comparison = "lnratio", transform = "exp", 
                    variables = "water_exp_body",   
@@ -110,6 +113,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
 # Gender specific estimates 
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "gender")
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "gender", conf_level = 0.8)
 
 mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "gender",
                    newdata = nd) |> posterior_draws()
@@ -133,6 +137,7 @@ ggplot(mfx, aes(x = draw, y = gender, fill = gender)) +
 # Age specific estimates 
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "age5")
+avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "age5", conf_level = 0.8)
 
 mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "age5",
                    newdata = nd) |> posterior_draws()

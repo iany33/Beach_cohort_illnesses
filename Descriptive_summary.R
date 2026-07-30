@@ -67,8 +67,15 @@ data_follow <- data |> filter(follow == "Yes")
 # Descriptive tables and summaries
 
 data |> 
-  select(age5, gender, education2, water_contact, water_exp_body, water_exp_head, follow) |> 
+  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, follow) |> 
   tbl_summary(by = follow, digits = list(all_categorical() ~ c(0, 1)),
+              type = list(all_categorical() ~ "categorical")) |> 
+  add_overall() |>
+  as_flex_table() 
+
+data |> 
+  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, follow) |> 
+  tbl_summary(by = follow, percent = "row", digits = list(all_categorical() ~ c(0, 1)),
               type = list(all_categorical() ~ "categorical")) |> 
   add_overall() |>
   as_flex_table() 
