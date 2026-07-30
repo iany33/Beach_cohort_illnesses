@@ -157,6 +157,8 @@ ggplot(mfx, aes(x = draw, y = age5, fill = age5)) +
   facet_wrap(~ contrast) +
   xlim(-15, 50) 
 
+ggsave("Fig3.tif", width = 6, height = 6, units = "in", dpi = 600)
+
 # Compare to other exposure measures
 
 nd <- data_follow |> 
@@ -463,6 +465,8 @@ Resp_any_RD <- Resp_any_RD + ggtitle("Respiratory Illness")
 Fig_RD <- Skin_any_RD + Skin_body_RD + Skin_head_RD + Resp_any_RD + Resp_body_RD + Resp_head_RD
 Fig_RD + plot_layout(ncol = 1, axes = 'collect')
 
+ggsave("Fig1.tif", width = 6, height = 8, units = "in", dpi = 600)
+
 remove(Resp_any_RD, Resp_body_RD, Resp_head_RD)
 remove(Skin_any_RD, Skin_body_RD, Skin_head_RD)
 
@@ -474,6 +478,8 @@ Resp_any <- Resp_any + ggtitle("Respiratory Illness")
 
 Fig_RR <- Skin_any + Skin_body + Skin_head + Resp_any + Resp_body + Resp_head
 Fig_RR + plot_layout(ncol = 1, axes = 'collect')
+
+ggsave("Fig2.tif", width = 6, height = 8, units = "in", dpi = 600)
 
 remove(Resp_any, Resp_body, Resp_head)
 remove(Skin_any, Skin_body, Skin_head)

@@ -24,7 +24,7 @@ pacman::p_load(
 # Sequence E. coli by range of logged, standardized and centered variable then back-transform
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_e_coli_max_s = range(log_e_coli_max_s, na.rm=TRUE))
+  reframe(log_e_coli_max_s = range(log_e_coli_max_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_e_coli_max_s = seq(-2.186539, 2.281874, by = 0.2), 
@@ -59,7 +59,7 @@ avg_comparisons(m_skin1, re_formula = NA, variables = list(log_e_coli_max_s = "i
 # qPCR enterococci model 
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_entero_max_s = range(log_entero_max_s, na.rm=TRUE))
+  reframe(log_entero_max_s = range(log_entero_max_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_entero_max_s = seq(-2.014249, 3.1953, by = 0.4), 
@@ -97,7 +97,7 @@ avg_comparisons(m_skin_entero, re_formula = NA, variables = list(log_entero_max_
 # MST human marker mt model 
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_mst_human_mt_max_s = range(log_mst_human_mt_max_s, na.rm=TRUE))
+  reframe(log_mst_human_mt_max_s = range(log_mst_human_mt_max_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_mst_human_mt_max_s = seq(-1.695368, 1.567463, by = 0.4), 
@@ -135,7 +135,7 @@ avg_comparisons(m_skin_human_mt, re_formula = NA, variables = list(log_mst_human
 ### Marginal effects for MST human sewage biomarker model ###
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_mst_human_max_s = range(log_mst_human_max_s, na.rm=TRUE))
+  reframe(log_mst_human_max_s = range(log_mst_human_max_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_mst_human_max_s = seq(-0.8906186, 2.3137543, by = 0.4), 
@@ -170,7 +170,7 @@ avg_comparisons(m_skin_human, re_formula = NA, variables = list(log_mst_human_ma
 ### MST seagull marker model
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_mst_gull_max_s = range(log_mst_gull_max_s, na.rm=TRUE))
+  reframe(log_mst_gull_max_s = range(log_mst_gull_max_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_mst_gull_max_s = seq(-2.718343, 1.832380, by = 0.4), 
@@ -205,7 +205,7 @@ avg_comparisons(m_skin_gull, re_formula = NA, variables = list(log_mst_gull_max_
 ### Turbidity model
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_turbidity_s = range(log_turbidity_s, na.rm=TRUE))
+  reframe(log_turbidity_s = range(log_turbidity_s, na.rm=TRUE))
 
 nd <- data_follow |> 
   data_grid(log_turbidity_s = seq(-1.149963, 2.982043, by = 0.4), 
@@ -246,8 +246,9 @@ Skin_gull <- Skin_gull + theme(legend.position = "none")
 Skin_FIB <- Skin_ecoli + Skin_human + Skin_human_mt + Skin_gull + Skin_entero + Skin_turbidity
 Skin_FIB + plot_annotation(tag_levels = 'A') + plot_layout(ncol = 2)
 
-remove(Skin_ecoli, Skin_human, Skin_human_mt, Skin_gull, Skin_entero, Skin_turbidity)
+ggsave("Fig4.tif", width = 7, height = 9, units = "in", dpi = 600)
 
+remove(Skin_ecoli, Skin_human, Skin_human_mt, Skin_gull, Skin_entero, Skin_turbidity)
 
 
 ## Evaluate E. coli cut-points
@@ -288,6 +289,8 @@ ggplot(mfx, aes(x = draw, y = factor(e_coli), fill = factor(log_e_coli_max_s))) 
   scale_fill_viridis(discrete=TRUE) +
   facet_wrap(~ contrast) +
   xlim(-20, 60)
+
+ggsave("Fig5.tif", width = 6, height = 6, units = "in", dpi = 600)
 
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s")
 avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s", conf_level = 0.8)
