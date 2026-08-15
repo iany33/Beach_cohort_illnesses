@@ -163,6 +163,16 @@ data_follow |>
               type = all_categorical() ~ "categorical")
 
 data_follow |> 
+  select(respiratory3, beach) |> 
+  tbl_summary(by = respiratory3, digits = list(all_categorical() ~ c(0, 1)),
+              type = all_categorical() ~ "categorical")
+
+data_follow |> 
+  select(skin_infection3, beach) |> 
+  tbl_summary(by = skin_infection3, digits = list(all_categorical() ~ c(0, 1)),
+              type = all_categorical() ~ "categorical")
+
+data_follow |> 
   ggplot(aes(x = respiratory3, y = log_e_coli_max, fill = respiratory3)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +

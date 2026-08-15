@@ -156,7 +156,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_mst_human, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log Human Sewage Marker",
+  labs(x = "Log Human Feces Marker",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 
@@ -191,7 +191,7 @@ pred <- pred |>
 ggplot(pred, aes(x = log_mst_gull_max, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
-  labs(x = "Log Seagull Marker",
+  labs(x = "Log Seagull Feces Marker",
        y = "Predicted Probability of Skin Infection",
        fill = "") +
   theme_classic() + 

@@ -21,10 +21,10 @@ pacman::p_load(
 ### Skin Infections and Body Immersion
 
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
+  reframe(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
 
 list <- data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
+  reframe(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
 list <- as.list(list)
 
 exp(list$log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))
@@ -483,5 +483,104 @@ ggsave("Fig2.tif", width = 6, height = 8, units = "in", dpi = 600)
 
 remove(Resp_any, Resp_body, Resp_head)
 remove(Skin_any, Skin_body, Skin_head)
+
+
+
+
+
+### Site-specific posterior probabilities and contrasts
+
+list <- data |> distinct(recruit_date, .keep_all = TRUE) |> 
+  reframe(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
+list <- as.list(list)
+
+nd <- data_follow |> 
+  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
+            water_exp_body = c("No", "Yes"),
+            age5 = c("0-9", "10-19", "20+"),
+            gender = c("woman/girl", "man/boy", "fluid/trans"),
+            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
+            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
+            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
+            sand_contact = "No", household_group = "Yes",
+            site = data_follow$site) 
+
+pred <- predictions(m_skin1, re_formula = ~ (1 | site), 
+                    type = "response", newdata = nd) |> get_draws()
+
+pred <- pred |> mutate(draw = draw*1000)
+
+ggplot(pred, aes(x = draw, y = site, fill = site)) +
+  stat_halfeye(slab_alpha = .5)  +
+  labs(x = "Predicted Skin Infection Risk per 1000 Beachgoers", y = "Site",
+       subtitle = "Posterior Predictions", fill = "Body Immersion") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  facet_wrap(~ water_exp_body) +
+  scale_fill_viridis(discrete=TRUE, option = "turbo") +
+  xlim(0, 100) 
+
+avg_comparisons(m_skin1, re_formula = ~ (1 | site),
+                variables = "water_exp_body", newdata = nd, by = "site")
+
+mfx <- comparisons(m_skin1, re_formula = ~ (1 | site), variables = "water_exp_body", by = "site",
+                   newdata = nd) |> posterior_draws()
+
+mfx <- mfx |> mutate(draw = draw*1000)
+
+ggplot(mfx, aes(x = draw, y = site, fill = site)) +
+  stat_halfeye(slab_alpha = .5)  +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(x = "Effect of Body Immersion on Skin Infection Risk per 1000 Beachgoers", y = "") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  xlim(-10, 40) +
+  scale_fill_viridis(discrete=TRUE, option = "turbo") +
+  facet_wrap(~ contrast)
+
+
+data |> distinct(recruit_date, .keep_all = TRUE) |> 
+  reframe(log_e_coli_max_s = range(log_e_coli_max_s, na.rm=TRUE))
+
+nd <- data_follow |> 
+  data_grid(log_e_coli_max_s = seq(-2.186539, 2.281874, by = 0.2), 
+            water_exp_body = c("No", "Yes"),
+            age5 = c("0-9", "10-19", "20+"),
+            gender = c("woman/girl", "man/boy", "fluid/trans"),
+            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
+            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
+            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
+            sand_contact = "No", household_group = "Yes",
+            site = data_follow$site) 
+
+pred <- predictions(m_skin1, re_formula = ~ (1 | site), by = c("water_exp_body", "log_e_coli_max_s", "site"), 
+                    type = "response", newdata = nd) |> get_draws()
+
+pred <- pred |> 
+  mutate(e_coli = exp(log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))) 
+
+pred <- pred |> 
+  mutate(log_e_coli = log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE)) 
+
+ggplot(pred, aes(x = log_e_coli, y = draw)) +
+  stat_lineribbon() +
+  scale_fill_brewer(palette = "Blues") +
+  labs(x = "Log E. coli Highest Single Sample",
+       y = "Predicted Probability of Skin Infection",
+       fill = "") +
+  theme_classic() + 
+  theme(legend.position = "bottom")
+
+ggplot(pred, aes(x = log_e_coli, y = draw)) +
+  stat_lineribbon() +
+  scale_fill_brewer(palette = "Blues") +
+  labs(x = "Log E. coli Highest Single Sample",
+       y = "Predicted Probability of Skin Infection",
+       fill = "") +
+  theme_classic() + 
+  theme(legend.position = "bottom") +
+  facet_wrap(~ site + water_exp_body, ncol = 2)
+
+
 
 
