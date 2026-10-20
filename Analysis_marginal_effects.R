@@ -16,7 +16,7 @@ pacman::p_load(
 )
 
 ### Conditional and marginal effects with marginaleffects R package
-# Predictions ignore cluster-level variables (re_formula = NA) to get overall averages
+# Predictions integrate over cluster-level variables (re_formula = NULL) 
 
 ### Skin Infections and Body Immersion
 
@@ -29,53 +29,44 @@ list <- as.list(list)
 
 exp(list$log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
 
-predictions(m_skin1, re_formula = NA, by = "water_exp_body", type = "response", newdata = nd)
+avg_pred <- avg_predictions(m_skin1, variables = "water_exp_body", re_formula = NULL)
+avg_pred
 
-pred <- predictions(m_skin1, re_formula = NA, by = "water_exp_body", type = "response", newdata = nd) |> get_draws()
-
+pred <- posterior_draws(avg_pred)
 pred <- pred |> mutate(draw = draw*1000)
 
 ggplot(pred, aes(x = draw, y = water_exp_body, fill = water_exp_body)) +
   stat_halfeye(slab_alpha = .5)  +
-  labs(x = "Predicted Skin Infection Incident Risk per 1000 Beachgoers", y = "Body Immersion Status",
+  labs(x = "Predicted Skin Symptoms Incident Risk per 1000 Beachgoers", y = "Body Immersion Status",
        subtitle = "Posterior Predictions", fill = "Water contact") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
-  xlim(0, 75)  
+  xlim(0, 60)  
+
 
 # Examine marginal effects/contrast of water contact exposure effect - probability scale
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd)
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, conf_level = 0.8)
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", conf_level = 0.8)
+avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body")
+avg_comp
 
-mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "water_exp_body", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Body Immersion"))
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 0, linetype = "dashed") +
   labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Skin_body_RD
+  xlim(-30, 40) -> Skin_body_RD
 
 # Check proportion of posterior that is greater than 0 and other values
 
@@ -87,38 +78,43 @@ mfx |> group_by(contrast) |>
 
 # Population-averaged (marginal) adjusted risk ratios
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd,
+avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", 
                 comparison = "lnratioavg", transform = "exp")
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd,
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", 
                 comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
 
-mfx <- comparisons(m_skin1, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_exp_body",   
-                   by = "water_exp_body", newdata = nd) |> posterior_draws()
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 1, linetype = "dashed") +
   labs(x = "Risk Ratio", y="") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Skin_body
+  xlim(0,3.5) -> Skin_body
 
 
 # Gender specific estimates 
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "gender")
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "gender", conf_level = 0.8)
+avg_predictions(m_skin1, variables = "water_exp_body", by = c("gender", "water_exp_body"), re_formula = NULL)
+avg_comparisons(m_skin1, variables = "water_exp_body", by = "gender", re_formula = NULL, conf_level = 0.8)
 
-mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "gender",
-                   newdata = nd) |> posterior_draws()
 
-mfx <- mfx |> mutate(draw = draw*1000)
+comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "gender",
+            comparison = "lnratioavg", transform = "exp", conf_level = 0.8) 
+avg_comp <- comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "gender",
+                        comparison = "lnratioavg", transform = "exp") 
+avg_comp
+
+mfx <- posterior_draws(avg_comp)
+
+mfx <- mfx |> 
+  mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion (Yes - No)"))
 
 mfx <- mfx |> 
   mutate(gender = recode(gender, "man/boy" = "Man/boy", "woman/girl" = "Woman/girl",
@@ -126,54 +122,77 @@ mfx <- mfx |>
 
 ggplot(mfx, aes(x = draw, y = gender, fill = gender)) +
   stat_halfeye(slab_alpha = .5)  +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Effect of Body Immersion on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  labs(x = "Risk Ratio", y = "", title = "") +
   theme_minimal() +
   theme(legend.position = "none") +
-  xlim(-15, 50) +
+  xlim(0, 4) +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
-  facet_wrap(~ contrast)
+  facet_wrap(~ contrast) 
 
 # Age specific estimates 
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "age5")
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "age5", conf_level = 0.8)
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "age5")
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "age5", conf_level = 0.8)
 
-mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "age5",
-                   newdata = nd) |> posterior_draws()
+comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "age5",
+            comparison = "lnratioavg", transform = "exp", conf_level = 0.8) 
+avg_comp <- comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "age5",
+                        comparison = "lnratioavg", transform = "exp") 
+avg_comp
 
-mfx <- mfx |> mutate(draw = draw*1000)
+mfx <- posterior_draws(avg_comp)
+
+mfx <- mfx |> 
+  mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion (Yes - No)"))
 
 mfx <- mfx |> 
   mutate(age5 = fct_relevel(age5, "0-9", "10-19", "20+"))
 
 ggplot(mfx, aes(x = draw, y = age5, fill = age5)) +
   stat_halfeye(slab_alpha = .5)  +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Effect of Body Immersion on Skin Infection Incident Risk per 1000 Beachgoers", y = "") +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  labs(x = "Risk Ratio", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
   facet_wrap(~ contrast) +
-  xlim(-15, 50) 
+  xlim(0, 4) 
 
-ggsave("Fig3.tif", width = 6, height = 6, units = "in", dpi = 600)
+ggsave("Fig3.tif", width = 3, height = 3, scale = 1.8, units = "in", dpi = 600)
+
+# Examine site-specific effects
+
+avg_comparisons(m_skin1, re_formula = ~ (1 | site), variables = "water_exp_body", by = "site",
+                comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
+avg_comp <- avg_comparisons(m_skin1, re_formula = ~ (1 | site), variables = "water_exp_body", by = "site",
+                            comparison = "lnratioavg", transform = "exp")
+avg_comp
+
+mfx <- posterior_draws(avg_comp)
+
+mfx <- mfx |> 
+  mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
+
+ggplot(mfx, aes(x = draw, y = site, fill = site)) +
+  stat_halfeye(slab_alpha = .5)  +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  labs(x = "Risk Ratio", y = "Site") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  facet_wrap(~ contrast) +
+  scale_fill_viridis(discrete=TRUE, option = "turbo") +
+  xlim(0, 4)
+
+ggsave("Fig4.tif", width = 3, height = 4, scale = 1.8, units = "in", dpi = 600)
+
 
 # Compare to other exposure measures
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_contact = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact", by = "water_contact")
+avg_comp
 
-mfx <- comparisons(m_skin, re_formula = NA, variables = "water_contact", by = "water_contact", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
@@ -187,7 +206,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Skin_any_RD
+  xlim(-30, 40) -> Skin_any_RD
 
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
@@ -195,9 +214,12 @@ mfx |> group_by(contrast) |>
             proportion_5 = mean(draw > 5),
             proportion_10 = mean(draw > 10))
 
-mfx <- comparisons(m_skin, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_contact",   
-                   by = "water_contact", newdata = nd) |> posterior_draws()
+
+avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact", by = "water_contact",
+                            comparison = "lnratio", transform = "exp")
+avg_comp
+
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Any Water Contact"))
@@ -210,22 +232,14 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Skin_any
+  xlim(0,3.5) -> Skin_any
 
+# Head immersion
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_head = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_comp <- avg_comparisons(m_skin1.2, re_formula = NULL, variables = "water_exp_head", by = "water_contact")
+avg_comp
 
-mfx <- comparisons(m_skin1.2, re_formula = NA, variables = "water_exp_head", by = "water_exp_head", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
@@ -239,7 +253,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Skin_head_RD
+  xlim(-30, 40) -> Skin_head_RD
 
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
@@ -247,9 +261,11 @@ mfx |> group_by(contrast) |>
             proportion_5 = mean(draw > 5),
             proportion_10 = mean(draw > 10))
 
-mfx <- comparisons(m_skin1.2, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_exp_head",   
-                   by = "water_exp_head", newdata = nd) |> posterior_draws()
+avg_comp <- avg_comparisons(m_skin1.2, re_formula = NULL, comparison = "lnratio", transform = "exp", 
+                            variables = "water_exp_head", by = "water_contact")
+avg_comp
+
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Head immersion"))
@@ -262,34 +278,15 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#440154") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Skin_head
+  xlim(0,3.5) -> Skin_head
 
 
 ### Respiratory illness outcomes ###
 
+avg_pred <- avg_predictions(m_resp3.1, variables = "water_exp_body", re_formula = NULL)
+avg_pred
 
-data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
-
-list <- data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  summarize(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
-list <- as.list(list)
-
-exp(list$log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))
-
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            sand_contact = "No", household_group = "Yes") 
-
-predictions(m_resp3.1, re_formula = NA, by = "water_exp_body", type = "response", newdata = nd)
-
-pred <- predictions(m_resp3.1, re_formula = NA, by = "water_exp_body", type = "response", newdata = nd) |> get_draws()
-
+pred <- posterior_draws(avg_pred)
 pred <- pred |> mutate(draw = draw*1000)
 
 ggplot(pred, aes(x = draw, y = water_exp_body, fill = water_exp_body)) +
@@ -299,15 +296,14 @@ ggplot(pred, aes(x = draw, y = water_exp_body, fill = water_exp_body)) +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_viridis(discrete=TRUE, option = "turbo") +
-  xlim(0, 75)  
+  xlim(0, 60)  
 
 # Examine marginal effects/contrast of water contact exposure effect - probability scale
 
-avg_comparisons(m_resp3.1, re_formula = NA, variables = "water_exp_body", newdata = nd)
+avg_comp <- avg_comparisons(m_resp3.1, re_formula = NULL, variables = "water_exp_body")
+avg_comp 
 
-mfx <- comparisons(m_resp3.1, re_formula = NA, variables = "water_exp_body", by = "water_exp_body", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
@@ -321,7 +317,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Resp_body_RD
+  xlim(-30, 40) -> Resp_body_RD
 
 # Check proportion of posterior that is greater than 0 and other values
 
@@ -333,12 +329,11 @@ mfx |> group_by(contrast) |>
 
 # Population-averaged (marginal) adjusted risk ratios
 
-avg_comparisons(m_resp3.1, re_formula = NA, variables = "water_exp_body", newdata = nd,
-                comparison = "lnratioavg", transform = "exp")
+avg_comp <- avg_comparisons(m_resp3.1, re_formula = NULL, variables = "water_exp_body",
+                            comparison = "lnratioavg", transform = "exp")
+avg_comp 
 
-mfx <- comparisons(m_resp3.1, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_exp_body",   
-                   by = "water_exp_body", newdata = nd) |> posterior_draws()
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
@@ -351,22 +346,14 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Resp_body
+  xlim(0,3.5) -> Resp_body
 
 # Compare to other exposure measures
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_contact = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            sand_contact = "No", household_group = "Yes") 
+avg_comp <- avg_comparisons(m_resp3, re_formula = NULL, variables = "water_contact")
+avg_comp 
 
-mfx <- comparisons(m_resp3, re_formula = NA, variables = "water_contact", by = "water_contact", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
@@ -380,7 +367,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Resp_any_RD
+  xlim(-30, 40) -> Resp_any_RD
 
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
@@ -388,9 +375,11 @@ mfx |> group_by(contrast) |>
             proportion_5 = mean(draw > 5),
             proportion_10 = mean(draw > 10))
 
-mfx <- comparisons(m_resp3, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_contact",   
-                   by = "water_contact", newdata = nd) |> posterior_draws()
+avg_comp <- avg_comparisons(m_resp3, re_formula = NULL, variables = "water_contact",
+                            comparison = "lnratioavg", transform = "exp")
+avg_comp 
+
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Any Water Contact"))
@@ -403,21 +392,14 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Resp_any
+  xlim(0,3.5) -> Resp_any
 
+# Head immersion
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_head = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_resp = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            sand_contact = "No", household_group = "Yes") 
+avg_comp <- avg_comparisons(m_resp3.2, re_formula = NULL, variables = "water_exp_head")
+avg_comp 
 
-mfx <- comparisons(m_resp3.2, re_formula = NA, variables = "water_exp_head", by = "water_exp_head", 
-                   newdata = nd) |> posterior_draws()
-
+mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
@@ -431,7 +413,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-25, 40) -> Resp_head_RD
+  xlim(-30, 40) -> Resp_head_RD
 
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
@@ -439,9 +421,11 @@ mfx |> group_by(contrast) |>
             proportion_5 = mean(draw > 5),
             proportion_10 = mean(draw > 10))
 
-mfx <- comparisons(m_resp3.2, re_formula = NA, comparison = "lnratio", transform = "exp", 
-                   variables = "water_exp_head",   
-                   by = "water_exp_head", newdata = nd) |> posterior_draws()
+avg_comp <- avg_comparisons(m_resp3.2, re_formula = NULL, variables = "water_exp_head",
+                            comparison = "lnratioavg", transform = "exp")
+avg_comp 
+
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Head immersion"))
@@ -454,18 +438,18 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(0,3) -> Resp_head
+  xlim(0,3.5) -> Resp_head
 
 
 ### Combine RD plots ###
 
-Skin_any_RD <- Skin_any_RD + ggtitle("Skin Infection")
+Skin_any_RD <- Skin_any_RD + ggtitle("Skin Symptoms")
 Resp_any_RD <- Resp_any_RD + ggtitle("Respiratory Illness")
 
 Fig_RD <- Skin_any_RD + Skin_body_RD + Skin_head_RD + Resp_any_RD + Resp_body_RD + Resp_head_RD
 Fig_RD + plot_layout(ncol = 1, axes = 'collect')
 
-ggsave("Fig1.tif", width = 6, height = 8, units = "in", dpi = 600)
+ggsave("Fig1.tif", width = 3, height = 4, scale = 1.8, units = "in", dpi = 600)
 
 remove(Resp_any_RD, Resp_body_RD, Resp_head_RD)
 remove(Skin_any_RD, Skin_body_RD, Skin_head_RD)
@@ -473,113 +457,18 @@ remove(Skin_any_RD, Skin_body_RD, Skin_head_RD)
 
 ### Combine RR plots ###
 
-Skin_any <- Skin_any + ggtitle("Skin Infection")
+Skin_any <- Skin_any + ggtitle("Skin Symptoms")
 Resp_any <- Resp_any + ggtitle("Respiratory Illness")
 
 Fig_RR <- Skin_any + Skin_body + Skin_head + Resp_any + Resp_body + Resp_head
 Fig_RR + plot_layout(ncol = 1, axes = 'collect')
 
-ggsave("Fig2.tif", width = 6, height = 8, units = "in", dpi = 600)
+ggsave("Fig2.tif", width = 3, height = 4, scale = 1.8, units = "in", dpi = 600)
 
 remove(Resp_any, Resp_body, Resp_head)
 remove(Skin_any, Skin_body, Skin_head)
 
 
-
-
-
-### Site-specific posterior probabilities and contrasts
-
-list <- data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  reframe(log_e_coli_max_s = mean(log_e_coli_max_s, na.rm=TRUE))
-list <- as.list(list)
-
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes",
-            site = data_follow$site) 
-
-pred <- predictions(m_skin1, re_formula = ~ (1 | site), 
-                    type = "response", newdata = nd) |> get_draws()
-
-pred <- pred |> mutate(draw = draw*1000)
-
-ggplot(pred, aes(x = draw, y = site, fill = site)) +
-  stat_halfeye(slab_alpha = .5)  +
-  labs(x = "Predicted Skin Infection Risk per 1000 Beachgoers", y = "Site",
-       subtitle = "Posterior Predictions", fill = "Body Immersion") +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  facet_wrap(~ water_exp_body) +
-  scale_fill_viridis(discrete=TRUE, option = "turbo") +
-  xlim(0, 100) 
-
-avg_comparisons(m_skin1, re_formula = ~ (1 | site),
-                variables = "water_exp_body", newdata = nd, by = "site")
-
-mfx <- comparisons(m_skin1, re_formula = ~ (1 | site), variables = "water_exp_body", by = "site",
-                   newdata = nd) |> posterior_draws()
-
-mfx <- mfx |> mutate(draw = draw*1000)
-
-ggplot(mfx, aes(x = draw, y = site, fill = site)) +
-  stat_halfeye(slab_alpha = .5)  +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Effect of Body Immersion on Skin Infection Risk per 1000 Beachgoers", y = "") +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  xlim(-10, 40) +
-  scale_fill_viridis(discrete=TRUE, option = "turbo") +
-  facet_wrap(~ contrast)
-
-
-data |> distinct(recruit_date, .keep_all = TRUE) |> 
-  reframe(log_e_coli_max_s = range(log_e_coli_max_s, na.rm=TRUE))
-
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = seq(-2.186539, 2.281874, by = 0.2), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes",
-            site = data_follow$site) 
-
-pred <- predictions(m_skin1, re_formula = ~ (1 | site), by = c("water_exp_body", "log_e_coli_max_s", "site"), 
-                    type = "response", newdata = nd) |> get_draws()
-
-pred <- pred |> 
-  mutate(e_coli = exp(log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))) 
-
-pred <- pred |> 
-  mutate(log_e_coli = log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE)) 
-
-ggplot(pred, aes(x = log_e_coli, y = draw)) +
-  stat_lineribbon() +
-  scale_fill_brewer(palette = "Blues") +
-  labs(x = "Log E. coli Highest Single Sample",
-       y = "Predicted Probability of Skin Infection",
-       fill = "") +
-  theme_classic() + 
-  theme(legend.position = "bottom")
-
-ggplot(pred, aes(x = log_e_coli, y = draw)) +
-  stat_lineribbon() +
-  scale_fill_brewer(palette = "Blues") +
-  labs(x = "Log E. coli Highest Single Sample",
-       y = "Predicted Probability of Skin Infection",
-       fill = "") +
-  theme_classic() + 
-  theme(legend.position = "bottom") +
-  facet_wrap(~ site + water_exp_body, ncol = 2)
 
 
 

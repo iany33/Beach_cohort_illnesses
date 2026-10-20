@@ -67,14 +67,16 @@ data_follow <- data |> filter(follow == "Yes")
 # Descriptive tables and summaries
 
 data |> 
-  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, follow) |> 
+  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, 
+         site, beach, follow) |> 
   tbl_summary(by = follow, digits = list(all_categorical() ~ c(0, 1)),
               type = list(all_categorical() ~ "categorical")) |> 
   add_overall() |>
   as_flex_table() 
 
 data |> 
-  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, follow) |> 
+  select(gender, age5, education2, water_contact, water_exp_body, water_exp_head, 
+         year, beach, follow) |>  
   tbl_summary(by = follow, percent = "row", digits = list(all_categorical() ~ c(0, 1)),
               type = list(all_categorical() ~ "categorical")) |> 
   add_overall() |>
@@ -104,6 +106,20 @@ data_follow |> tabyl(respiratory_3day)
 data_follow |> tabyl(skin_infection_3day)
 data_follow |> tabyl(ear_infection_3day)
 data_follow |> tabyl(eye_infection_3day)
+
+
+data |> 
+  select(age5, gender, water_contact, water_exp_body, water_exp_head, site, beach, respiratory3) |> 
+  tbl_summary(by = respiratory3, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(age5, gender, water_contact, water_exp_body, water_exp_head, site, beach, skin_infection3) |> 
+  tbl_summary(by = skin_infection3, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
 
 data |> group_by(house_id) |> 
   mutate(n = n(), house_size = case_when(

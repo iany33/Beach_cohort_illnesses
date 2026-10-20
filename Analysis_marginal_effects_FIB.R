@@ -15,8 +15,8 @@ pacman::p_load(
   viridis
 )
 
-### Conditional and marginal effects with marginaleffects R package
-# Predictions ignore cluster-level variables (re_formula = NA) to get overall averages
+### Marginal effects with marginaleffects R package
+# Predictions integrate over cluster-level variables (re_formula = NULL)
 
 ### Skin Infections
 
@@ -26,18 +26,11 @@ pacman::p_load(
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_e_coli_max_s = range(log_e_coli_max_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = seq(-2.186539, 2.281874, by = 0.2), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin1, type = "response", re_formula = NULL, variables = list(
+  log_e_coli_max_s = seq(-2.186539, 2.281874, by = 0.3),
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin1, re_formula = NA, by = c("water_exp_body", "log_e_coli_max_s"), 
-                    type = "response", newdata = nd) |> get_draws()
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_e_coli = log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE)) 
@@ -46,14 +39,15 @@ ggplot(pred, aes(x = log_e_coli, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log E. coli",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)   -> Skin_ecoli
 
-avg_comparisons(m_skin1, re_formula = NA, variables = list(log_e_coli_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin1, re_formula = NA, variables = list(log_e_coli_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 
 # qPCR enterococci model 
@@ -61,21 +55,11 @@ avg_comparisons(m_skin1, re_formula = NA, variables = list(log_e_coli_max_s = "i
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_entero_max_s = range(log_entero_max_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_entero_max_s = seq(-2.014249, 3.1953, by = 0.4), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin_entero, type = "response", re_formula = NULL, variables = list(
+  log_entero_max_s = seq(-2.014249, 3.1953, by = 0.4),
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin_entero, re_formula = NA, type = "response", newdata = nd) |> 
-  posterior_draws()
-
-pred <- pred |> 
-  mutate(entero = exp(log_entero_max_s*sd(data_follow$log_entero_max, na.rm=TRUE) + mean(data_follow$log_entero_max, na.rm=TRUE))) 
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_entero_max = log_entero_max_s*sd(data_follow$log_entero_max, na.rm=TRUE) + mean(data_follow$log_entero_max, na.rm=TRUE)) 
@@ -84,14 +68,15 @@ ggplot(pred, aes(x = log_entero_max, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log Enterococci",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)  -> Skin_entero
 
-avg_comparisons(m_skin_entero, re_formula = NA, variables = list(log_entero_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin_entero, re_formula = NA, variables = list(log_entero_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin_entero, re_formula = NULL, variables = list(log_entero_max_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin_entero, re_formula = NULL, variables = list(log_entero_max_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 
 # MST human marker mt model 
@@ -99,21 +84,11 @@ avg_comparisons(m_skin_entero, re_formula = NA, variables = list(log_entero_max_
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_mst_human_mt_max_s = range(log_mst_human_mt_max_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_mst_human_mt_max_s = seq(-1.695368, 1.567463, by = 0.4), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin_human_mt, type = "response", re_formula = NULL, variables = list(
+  log_mst_human_mt_max_s = seq(-1.695368, 1.567463, by = 0.4), 
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin_human_mt, re_formula = NA, type = "response", newdata = nd) |> 
-  posterior_draws()
-
-pred <- pred |> 
-  mutate(mst_human_mt = exp(log_mst_human_mt_max_s*sd(data_follow$log_mst_human_mt_max, na.rm=TRUE) + mean(data_follow$log_mst_human_mt_max, na.rm=TRUE))) 
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_mst_human_mt = log_mst_human_mt_max_s*sd(data_follow$log_mst_human_mt_max, na.rm=TRUE) + mean(data_follow$log_mst_human_mt_max, na.rm=TRUE)) 
@@ -122,14 +97,15 @@ ggplot(pred, aes(x = log_mst_human_mt, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log Human Mitochondrial Marker",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)   -> Skin_human_mt
 
-avg_comparisons(m_skin_human_mt, re_formula = NA, variables = list(log_mst_human_mt_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin_human_mt, re_formula = NA, variables = list(log_mst_human_mt_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin_human_mt, re_formula = NULL, variables = list(log_mst_human_mt_max_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin_human_mt, re_formula = NULL, variables = list(log_mst_human_mt_max_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 
 ### Marginal effects for MST human sewage biomarker model ###
@@ -137,18 +113,11 @@ avg_comparisons(m_skin_human_mt, re_formula = NA, variables = list(log_mst_human
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_mst_human_max_s = range(log_mst_human_max_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_mst_human_max_s = seq(-0.8906186, 2.3137543, by = 0.4), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin_human, type = "response", re_formula = NULL, variables = list(
+  log_mst_human_max_s = seq(-0.8906186, 2.3137543, by = 0.4),  
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin_human, re_formula = NA, type = "response", newdata = nd) |> 
-  posterior_draws()
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_mst_human = log_mst_human_max_s*sd(data_follow$log_mst_human_max, na.rm=TRUE) + mean(data_follow$log_mst_human_max, na.rm=TRUE)) 
@@ -157,14 +126,15 @@ ggplot(pred, aes(x = log_mst_human, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log Human Feces Marker",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body) -> Skin_human
 
-avg_comparisons(m_skin_human, re_formula = NA, variables = list(log_mst_human_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin_human, re_formula = NA, variables = list(log_mst_human_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin_human, re_formula = NULL, variables = list(log_mst_human_max_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin_human, re_formula = NULL, variables = list(log_mst_human_max_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 
 ### MST seagull marker model
@@ -172,18 +142,11 @@ avg_comparisons(m_skin_human, re_formula = NA, variables = list(log_mst_human_ma
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_mst_gull_max_s = range(log_mst_gull_max_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_mst_gull_max_s = seq(-2.718343, 1.832380, by = 0.4), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin_gull, type = "response", re_formula = NULL, variables = list(
+  log_mst_gull_max_s = seq(-2.718343, 1.832380, by = 0.4), 
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin_gull, re_formula = NA, type = "response", newdata = nd) |> 
-  posterior_draws()
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_mst_gull_max = log_mst_gull_max_s*sd(data_follow$log_mst_gull_max, na.rm=TRUE) + mean(data_follow$log_mst_gull_max, na.rm=TRUE)) 
@@ -192,14 +155,15 @@ ggplot(pred, aes(x = log_mst_gull_max, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log Seagull Feces Marker",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)  -> Skin_gull
 
-avg_comparisons(m_skin_gull, re_formula = NA, variables = list(log_mst_gull_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin_gull, re_formula = NA, variables = list(log_mst_gull_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin_gull, re_formula = NULL, variables = list(log_mst_gull_max_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin_gull, re_formula = NULL, variables = list(log_mst_gull_max_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 
 ### Turbidity model
@@ -207,18 +171,11 @@ avg_comparisons(m_skin_gull, re_formula = NA, variables = list(log_mst_gull_max_
 data |> distinct(recruit_date, .keep_all = TRUE) |> 
   reframe(log_turbidity_s = range(log_turbidity_s, na.rm=TRUE))
 
-nd <- data_follow |> 
-  data_grid(log_turbidity_s = seq(-1.149963, 2.982043, by = 0.4), 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_pred <- avg_predictions(m_skin_turb, type = "response", re_formula = NULL, variables = list(
+  log_turbidity_s = seq(-1.149963, 2.982043, by = 0.4), 
+  water_exp_body = c("Yes", "No")))
 
-pred <- predictions(m_skin_turb, re_formula = NA, type = "response", newdata = nd) |> 
-  posterior_draws()
+pred <- posterior_draws(avg_pred)
 
 pred <- pred |> 
   mutate(log_turbidity = log_turbidity_s*sd(data_follow$log_turbidity_s, na.rm=TRUE) + mean(data_follow$log_turbidity_s, na.rm=TRUE)) 
@@ -227,14 +184,15 @@ ggplot(pred, aes(x = log_turbidity, y = draw)) +
   stat_lineribbon() +
   scale_fill_brewer(palette = "Purples") +
   labs(x = "Log Turbidity",
-       y = "Predicted Probability of Skin Infection",
+       y = "Predicted Probability of Skin Symptoms",
        fill = "") +
   theme_classic() + 
   theme(legend.position = "bottom") +
+  scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)  -> Skin_turbidity
 
-avg_comparisons(m_skin_turb, re_formula = NA, variables = list(log_turbidity_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin_turb, re_formula = NA, variables = list(log_turbidity_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin_turb, re_formula = NULL, variables = list(log_turbidity_s = "iqr"), newdata = nd)
+avg_comparisons(m_skin_turb, re_formula = NULL, variables = list(log_turbidity_s = "iqr"), newdata = nd, by = "water_exp_body")
 
 ## Combine FIB plots together
 
@@ -246,7 +204,7 @@ Skin_gull <- Skin_gull + theme(legend.position = "none")
 Skin_FIB <- Skin_ecoli + Skin_human + Skin_human_mt + Skin_gull + Skin_entero + Skin_turbidity
 Skin_FIB + plot_annotation(tag_levels = 'A') + plot_layout(ncol = 2)
 
-ggsave("Fig4.tif", width = 7, height = 9, units = "in", dpi = 600)
+ggsave("Fig5.tif", width = 4, height = 5, scale = 2, units = "in", dpi = 600)
 
 remove(Skin_ecoli, Skin_human, Skin_human_mt, Skin_gull, Skin_entero, Skin_turbidity)
 
@@ -263,42 +221,49 @@ list <- data |> distinct(recruit_date, .keep_all = TRUE) |>
   reframe(log_e_coli_max_s = quantile(log_e_coli_max_s, na.rm=TRUE, c(0.25, 0.5, 0.75, 0.95)))
 list <- as.list(list)
 
-nd <- data_follow |> 
-  data_grid(log_e_coli_max_s = list$log_e_coli_max_s, 
-            water_exp_body = c("No", "Yes"),
-            age5 = c("0-9", "10-19", "20+"),
-            gender = c("woman/girl", "man/boy", "fluid/trans"),
-            education2 = "bachelors", cond_skin = "No", cond_immune = "No",
-            cond_allergy = "No", other_rec_act = "Yes", beach_exp_food = "Yes",
-            beach_exp_sunscreen = "Yes", beach_exp_repellent = "No",
-            sand_contact = "No", household_group = "Yes") 
+avg_predictions(m_skin1, re_formula = NULL, variables = "water_exp_body",
+                newdata = datagrid(log_e_coli_max_s = list$log_e_coli_max_s,
+                                   grid_type = "counterfactual"), by = "log_e_coli_max_s")
 
-mfx <- comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "log_e_coli_max_s", 
-                   newdata = nd) |> get_draws()
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body",
+                newdata = datagrid(log_e_coli_max_s = list$log_e_coli_max_s,
+                                   grid_type = "counterfactual"),
+                by = "log_e_coli_max_s", conf_level = 0.80)
+
+avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body",
+                            newdata = datagrid(log_e_coli_max_s = list$log_e_coli_max_s,
+                                               grid_type = "counterfactual"),
+                            by = "log_e_coli_max_s")
+avg_comp
+
+mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> mutate(e_coli = exp(log_e_coli_max_s*sd(data_follow$log_e_coli_max, na.rm=TRUE) + mean(data_follow$log_e_coli_max, na.rm=TRUE))) |> 
   mutate(e_coli = round(e_coli, digits = 0)) |> 
   mutate(draw = draw*1000)
 
+mfx <- mfx |> 
+  mutate(contrast = recode(contrast, "Yes - No" = "Body Immersion (Yes - No)"))
+
 ggplot(mfx, aes(x = draw, y = factor(e_coli), fill = factor(log_e_coli_max_s))) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 0, linetype = "dashed") +
-  labs(x = "Risk Difference per 1000 Beachgoers at Specific E. coli Values", y = "") +
+  labs(x = "Risk Difference for Skin Symptoms per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_viridis(discrete=TRUE) +
   facet_wrap(~ contrast) +
-  xlim(-20, 60)
+  xlim(-25, 75)
 
-ggsave("Fig5.tif", width = 6, height = 6, units = "in", dpi = 600)
+ggsave("Fig6.tif", width = 3, height = 3, scale = 1.8, units = "in", dpi = 600)
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s")
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", newdata = nd, by = "log_e_coli_max_s", conf_level = 0.8)
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "log_e_coli_max_s")
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "log_e_coli_max_s", conf_level = 0.8)
 
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "log_e_coli_max_s",
-                newdata = nd, comparison = "lnratioavg", transform = "exp")
-avg_comparisons(m_skin1, re_formula = NA, variables = "water_exp_body", by = "log_e_coli_max_s",
-                newdata = nd, comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "log_e_coli_max_s",
+                comparison = "lnratioavg", transform = "exp")
+avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", by = "log_e_coli_max_s",
+                comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
 
 # Check proportion of posterior that is greater than 0 and other values
 
