@@ -49,6 +49,7 @@ ggplot(pred, aes(x = draw, y = water_exp_body, fill = water_exp_body)) +
 # Examine marginal effects/contrast of water contact exposure effect - probability scale
 
 avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", conf_level = 0.8)
+
 avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body")
 avg_comp
 
@@ -57,6 +58,13 @@ mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Body Immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+         cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+         cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
@@ -78,15 +86,23 @@ mfx |> group_by(contrast) |>
 
 # Population-averaged (marginal) adjusted risk ratios
 
-avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", 
-                comparison = "lnratioavg", transform = "exp")
 avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", 
                 comparison = "lnratioavg", transform = "exp", conf_level = 0.8)
+
+avg_comp <- avg_comparisons(m_skin1, re_formula = NULL, variables = "water_exp_body", 
+                comparison = "lnratioavg", transform = "exp")
 
 mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
@@ -120,6 +136,14 @@ mfx <- mfx |>
   mutate(gender = recode(gender, "man/boy" = "Man/boy", "woman/girl" = "Woman/girl",
                          "fluid/trans" = "Fluid/trans"))
 
+ci <- mfx |> 
+  group_by(contrast, gender) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |>
+  group_by(gender) |>
+  reframe(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = gender, fill = gender)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 1, linetype = "dashed") +
@@ -149,6 +173,14 @@ mfx <- mfx |>
 mfx <- mfx |> 
   mutate(age5 = fct_relevel(age5, "0-9", "10-19", "20+"))
 
+ci <- mfx |> 
+  group_by(contrast, age5) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |>
+  group_by(age5) |>
+  reframe(median = sprintf("%.2f", draw[1]),
+          cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+          cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = age5, fill = age5)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 1, linetype = "dashed") +
@@ -174,6 +206,14 @@ mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
 
+ci <- mfx |> 
+  group_by(contrast, site) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |>
+  group_by(site) |>
+  reframe(median = sprintf("%.2f", draw[1]),
+          cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+          cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = site, fill = site)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 1, linetype = "dashed") +
@@ -189,7 +229,7 @@ ggsave("Fig4.tif", width = 3, height = 4, scale = 1.8, units = "in", dpi = 600)
 
 # Compare to other exposure measures
 
-avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact", by = "water_contact")
+avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact")
 avg_comp
 
 mfx <- posterior_draws(avg_comp)
@@ -198,8 +238,15 @@ mfx <- mfx |> mutate(draw = draw*1000)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Any Water Contact"))
 
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+            cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 0, linetype = "dashed") +
   labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
   theme_minimal() +
@@ -208,6 +255,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
   xlim(-30, 40) -> Skin_any_RD
 
+
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
             proportion_1 = mean(draw > 1),
@@ -215,7 +263,7 @@ mfx |> group_by(contrast) |>
             proportion_10 = mean(draw > 10))
 
 
-avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact", by = "water_contact",
+avg_comp <- avg_comparisons(m_skin, re_formula = NULL, variables = "water_contact", 
                             comparison = "lnratio", transform = "exp")
 avg_comp
 
@@ -223,6 +271,13 @@ mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Any Water Contact"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +
@@ -236,7 +291,7 @@ ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
 
 # Head immersion
 
-avg_comp <- avg_comparisons(m_skin1.2, re_formula = NULL, variables = "water_exp_head", by = "water_contact")
+avg_comp <- avg_comparisons(m_skin1.2, re_formula = NULL, variables = "water_exp_head")
 avg_comp
 
 mfx <- posterior_draws(avg_comp)
@@ -244,6 +299,24 @@ mfx <- mfx |> mutate(draw = draw*1000)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Head Immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+            cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
+ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = "#440154") +
+  scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
+  xlim(-30, 40) -> Skin_head_RD
+
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +
@@ -262,13 +335,20 @@ mfx |> group_by(contrast) |>
             proportion_10 = mean(draw > 10))
 
 avg_comp <- avg_comparisons(m_skin1.2, re_formula = NULL, comparison = "lnratio", transform = "exp", 
-                            variables = "water_exp_head", by = "water_contact")
+                            variables = "water_exp_head")
 avg_comp
 
 mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Head immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +
@@ -309,15 +389,22 @@ mfx <- mfx |> mutate(draw = draw*1000)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Body Immersion"))
 
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+            cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 0, linetype = "dashed") +
   labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-30, 40) -> Resp_body_RD
+  xlim(-30, 40)  -> Resp_body_RD
 
 # Check proportion of posterior that is greater than 0 and other values
 
@@ -337,6 +424,13 @@ mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Body Immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +
@@ -359,8 +453,15 @@ mfx <- mfx |> mutate(draw = draw*1000)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Any Water Contact"))
 
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+            cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 0, linetype = "dashed") +
   labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
   theme_minimal() +
@@ -384,6 +485,13 @@ mfx <- posterior_draws(avg_comp)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Any Water Contact"))
 
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +
   geom_vline(xintercept = 1, linetype = "dashed") +
@@ -405,15 +513,22 @@ mfx <- mfx |> mutate(draw = draw*1000)
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Head Immersion"))
 
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.0f", draw[1]),
+            cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
+
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
-  stat_halfeye(slab_alpha = .5)  +
+  stat_halfeye(slab_alpha = .5, .width = c(0.80, 0.95))  +
   geom_vline(xintercept = 0, linetype = "dashed") +
   labs(x = "Risk Difference per 1000 Beachgoers", y = "") +
   theme_minimal() +
   theme(legend.position = "none") +
   scale_fill_manual(values = "#21918c") +
   scale_y_discrete(expand = expand_scale(mult = c(0.1, 1))) +
-  xlim(-30, 40) -> Resp_head_RD
+  xlim(-30, 40)  -> Resp_head_RD
 
 mfx |> group_by(contrast) |> 
   summarize(proportion_0 = mean(draw > 0),
@@ -429,6 +544,13 @@ mfx <- posterior_draws(avg_comp)
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "ln(mean(Yes) / mean(No))" = "Head immersion"))
+
+ci <- mfx |> 
+  group_by(term, contrast) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |> 
+  summarize(median = sprintf("%.2f", draw[1]),
+            cri_80 = sprintf("%.2f, %.2f", .lower[.width == 0.80], .upper[.width == 0.80]),
+            cri_95 = sprintf("%.2f, %.2f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = contrast, fill = contrast)) +
   stat_halfeye(slab_alpha = .5)  +

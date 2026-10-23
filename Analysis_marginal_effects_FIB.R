@@ -46,8 +46,8 @@ ggplot(pred, aes(x = log_e_coli, y = draw)) +
   scale_y_continuous(limits = c(0, 0.1), breaks = seq(0, 0.1, by = 0.025)) +
   facet_wrap(~ water_exp_body)   -> Skin_ecoli
 
-avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"), newdata = nd)
-avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"), newdata = nd, by = "water_exp_body")
+avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"))
+avg_comparisons(m_skin1, re_formula = NULL, variables = list(log_e_coli_max_s = "iqr"), by = "water_exp_body")
 
 
 # qPCR enterococci model 
@@ -244,6 +244,14 @@ mfx <- mfx |> mutate(e_coli = exp(log_e_coli_max_s*sd(data_follow$log_e_coli_max
 
 mfx <- mfx |> 
   mutate(contrast = recode(contrast, "Yes - No" = "Body Immersion (Yes - No)"))
+
+ci <- mfx |> 
+  group_by(contrast, e_coli) |> 
+  median_qi(draw, .width = c(0.80, 0.95)) |>
+  group_by(e_coli) |>
+  reframe(median = sprintf("%.0f", draw[1]),
+          cri_80 = sprintf("%.0f, %.0f", .lower[.width == 0.80], .upper[.width == 0.80]),
+          cri_95 = sprintf("%.0f, %.0f", .lower[.width == 0.95], .upper[.width == 0.95])) 
 
 ggplot(mfx, aes(x = draw, y = factor(e_coli), fill = factor(log_e_coli_max_s))) +
   stat_halfeye(slab_alpha = .5)  +
