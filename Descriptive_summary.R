@@ -121,6 +121,48 @@ data |>
   as_flex_table() 
 
 
+data |> 
+  select(age5, respiratory3, skin_infection3) |> 
+  tbl_summary(by = age5, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(gender, respiratory3, skin_infection3) |> 
+  tbl_summary(by = gender, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(water_contact, respiratory3, skin_infection3) |> 
+  tbl_summary(by = water_contact, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(water_exp_body, respiratory3, skin_infection3) |> 
+  tbl_summary(by = water_exp_body, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(water_exp_head, respiratory3, skin_infection3) |> 
+  tbl_summary(by = water_exp_head, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(site, respiratory3, skin_infection3) |> 
+  tbl_summary(by = site, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
+data |> 
+  select(beach, respiratory3, skin_infection3) |> 
+  tbl_summary(by = beach, digits = list(all_categorical() ~ c(0, 1))) |> 
+  add_overall() |>  
+  as_flex_table() 
+
 data |> group_by(house_id) |> 
   mutate(n = n(), house_size = case_when(
     n == 1 ~ 1, n == 2 ~ 2, n == 3 ~ 3,
